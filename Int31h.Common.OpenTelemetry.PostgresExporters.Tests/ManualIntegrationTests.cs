@@ -21,7 +21,7 @@ public class ManualIntegrationTests
 {
     private const string TestConnectionString = "Host=localhost;Port=5432;Database=testdb;Username=user;Password=password;";
 
-    [Fact(Skip = "Manual integration test - start PostgreSQL with docker-compose up -d first")]
+    [Fact]
     public async Task TraceExporter_WithRealDatabase_CreatesTablesAndExportsData()
     {
         // Arrange
@@ -42,6 +42,7 @@ public class ManualIntegrationTests
         activity.Start();
         activity.SetTag("test.attribute", "test-value");
         activity.SetTag("span.kind", "internal");
+        activity.SetStatus(ActivityStatusCode.Ok, "Completed successfully");
         await Task.Delay(10); // Give it some duration
         activity.Stop();
         
@@ -87,7 +88,7 @@ public class ManualIntegrationTests
         activity.Dispose();
     }
 
-    [Fact(Skip = "Manual integration test - start PostgreSQL with docker-compose up -d first")]
+    [Fact]
     public async Task MetricsExporter_WithRealDatabase_CreatesTablesAndExportsData()
     {
         // Arrange
@@ -128,7 +129,7 @@ public class ManualIntegrationTests
         Assert.True(tableExists);
     }
 
-    [Fact(Skip = "Manual integration test - start PostgreSQL with docker-compose up -d first")]
+    [Fact]
     public async Task LogsExporter_WithRealDatabase_CreatesTablesAndExportsData()
     {
         // Arrange
@@ -169,7 +170,7 @@ public class ManualIntegrationTests
         Assert.True(tableExists);
     }
 
-    [Fact(Skip = "Manual integration test - start PostgreSQL with docker-compose up -d first")]
+    [Fact]
     public async Task DatabaseSetup_EnsureDatabaseSetup_CreatesSchemaAndTables()
     {
         // Arrange
@@ -206,7 +207,7 @@ public class ManualIntegrationTests
         Assert.True(logsTableExists);
     }
 
-    [Fact(Skip = "Manual integration test - start PostgreSQL with docker-compose up -d first")]
+    [Fact]
     public async Task AllExporters_WithSameConnectionString_ShareSameDatabaseObjects()
     {
         // Arrange

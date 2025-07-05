@@ -1,6 +1,7 @@
 using OpenTelemetry;
 using OpenTelemetry.Metrics;
 using Npgsql;
+using NpgsqlTypes;
 using Microsoft.Extensions.Logging;
 using System.Text.Json;
 
@@ -21,11 +22,6 @@ public class PostgresMetricsExporter : BaseExporter<Metric>
         _databaseSetup = new DatabaseSetup(options.ConnectionString, options.SchemaName, 
             logger as ILogger<DatabaseSetup>);
         _logger = logger;
-
-        if (_options.AutoCreateDatabaseObjects)
-        {
-            Task.Run(async () => await _databaseSetup.EnsureDatabaseSetupAsync());
-        }
     }
 
     public override ExportResult Export(in Batch<Metric> batch)
@@ -35,6 +31,12 @@ public class PostgresMetricsExporter : BaseExporter<Metric>
 
         try
         {
+            // Ensure database setup is complete before exporting
+            if (_options.AutoCreateDatabaseObjects)
+            {
+                _databaseSetup.EnsureDatabaseSetupAsync().GetAwaiter().GetResult();
+            }
+
             using var connection = new NpgsqlConnection(_options.ConnectionString);
             connection.Open();
 
@@ -69,7 +71,8 @@ public class PostgresMetricsExporter : BaseExporter<Metric>
                     {
                         attributes[tag.Key] = tag.Value ?? string.Empty;
                     }
-                    command.Parameters.AddWithValue("@attributes", JsonSerializer.Serialize(attributes));
+                    var attributesParam = new NpgsqlParameter("@attributes", NpgsqlDbType.Jsonb) { Value = JsonSerializer.Serialize(attributes) };
+                    command.Parameters.Add(attributesParam);
 
                     // Serialize resource (simplified)
                     var resource = new Dictionary<string, object>
@@ -77,7 +80,8 @@ public class PostgresMetricsExporter : BaseExporter<Metric>
                         ["metric.name"] = metric.Name,
                         ["metric.description"] = metric.Description ?? string.Empty
                     };
-                    command.Parameters.AddWithValue("@resource", JsonSerializer.Serialize(resource));
+                    var resourceParam = new NpgsqlParameter("@resource", NpgsqlDbType.Jsonb) { Value = JsonSerializer.Serialize(resource) };
+                    command.Parameters.Add(resourceParam);
 
                     command.ExecuteNonQuery();
                 }

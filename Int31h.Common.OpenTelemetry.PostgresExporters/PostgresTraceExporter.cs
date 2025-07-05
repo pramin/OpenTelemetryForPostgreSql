@@ -2,6 +2,7 @@ using System.Diagnostics;
 using OpenTelemetry;
 using OpenTelemetry.Trace;
 using Npgsql;
+using NpgsqlTypes;
 using Microsoft.Extensions.Logging;
 using System.Text.Json;
 
@@ -22,11 +23,6 @@ public class PostgresTraceExporter : BaseExporter<Activity>
         _databaseSetup = new DatabaseSetup(options.ConnectionString, options.SchemaName, 
             logger as ILogger<DatabaseSetup>);
         _logger = logger;
-
-        if (_options.AutoCreateDatabaseObjects)
-        {
-            Task.Run(async () => await _databaseSetup.EnsureDatabaseSetupAsync());
-        }
     }
 
     public override ExportResult Export(in Batch<Activity> batch)
@@ -49,6 +45,12 @@ public class PostgresTraceExporter : BaseExporter<Activity>
 
         try
         {
+            // Ensure database setup is complete before exporting
+            if (_options.AutoCreateDatabaseObjects)
+            {
+                await _databaseSetup.EnsureDatabaseSetupAsync();
+            }
+
             await using var connection = new NpgsqlConnection(_options.ConnectionString);
             await connection.OpenAsync(cancellationToken);
 
@@ -78,7 +80,16 @@ public class PostgresTraceExporter : BaseExporter<Activity>
                 command.Parameters.AddWithValue("@start_time", activity.StartTimeUtc);
                 command.Parameters.AddWithValue("@end_time", activity.StartTimeUtc.Add(activity.Duration));
                 command.Parameters.AddWithValue("@duration_ns", activity.Duration.Ticks * 100); // Convert to nanoseconds
-                command.Parameters.AddWithValue("@status_code", (int)activity.Status);
+                // Convert ActivityStatusCode to integer
+                var statusCode = activity.Status switch
+                {
+                    ActivityStatusCode.Unset => 0,
+                    ActivityStatusCode.Ok => 1,
+                    ActivityStatusCode.Error => 2,
+                    _ => 0
+                };
+                
+                command.Parameters.AddWithValue("@status_code", statusCode);
                 command.Parameters.AddWithValue("@status_message", (object?)activity.StatusDescription ?? DBNull.Value);
 
                 // Serialize attributes
@@ -87,7 +98,8 @@ public class PostgresTraceExporter : BaseExporter<Activity>
                 {
                     attributes[tag.Key] = tag.Value ?? string.Empty;
                 }
-                command.Parameters.AddWithValue("@attributes", JsonSerializer.Serialize(attributes));
+                var attributesParam = new NpgsqlParameter("@attributes", NpgsqlDbType.Jsonb) { Value = JsonSerializer.Serialize(attributes) };
+                command.Parameters.Add(attributesParam);
 
                 // Serialize events
                 var events = activity.Events.Select(e => new
@@ -96,7 +108,8 @@ public class PostgresTraceExporter : BaseExporter<Activity>
                     Timestamp = e.Timestamp.UtcDateTime,
                     Attributes = e.Tags.ToDictionary(t => t.Key, t => t.Value ?? string.Empty)
                 }).ToArray();
-                command.Parameters.AddWithValue("@events", JsonSerializer.Serialize(events));
+                var eventsParam = new NpgsqlParameter("@events", NpgsqlDbType.Jsonb) { Value = JsonSerializer.Serialize(events) };
+                command.Parameters.Add(eventsParam);
 
                 // Serialize resource
                 var resource = new Dictionary<string, object>();
@@ -106,7 +119,8 @@ public class PostgresTraceExporter : BaseExporter<Activity>
                     if (!string.IsNullOrEmpty(activity.Source.Version))
                         resource["service.version"] = activity.Source.Version;
                 }
-                command.Parameters.AddWithValue("@resource", JsonSerializer.Serialize(resource));
+                var resourceParam = new NpgsqlParameter("@resource", NpgsqlDbType.Jsonb) { Value = JsonSerializer.Serialize(resource) };
+                command.Parameters.Add(resourceParam);
 
                 await command.ExecuteNonQueryAsync(cancellationToken);
             }
