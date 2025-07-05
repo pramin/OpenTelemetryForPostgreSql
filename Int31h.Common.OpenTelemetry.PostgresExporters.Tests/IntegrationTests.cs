@@ -7,6 +7,10 @@ using Microsoft.Extensions.Logging;
 
 namespace Int31h.Common.OpenTelemetry.PostgresExporters.Tests;
 
+/// <summary>
+/// Basic integration tests that verify error handling with invalid connections.
+/// For real database tests, see ManualIntegrationTests.cs
+/// </summary>
 public class IntegrationTests
 {
     [Fact]

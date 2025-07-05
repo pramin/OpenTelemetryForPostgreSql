@@ -194,6 +194,53 @@ dotnet build
 dotnet test
 ```
 
+#### Integration Testing with PostgreSQL
+
+The library includes both basic integration tests and manual integration tests that work with a real PostgreSQL database.
+
+**Option 1: Using Docker Compose (Recommended)**
+
+1. Start PostgreSQL container:
+```bash
+docker-compose up -d
+```
+
+2. Run manual integration tests by removing the `Skip` parameter from the tests in `ManualIntegrationTests.cs`:
+```csharp
+[Fact] // Remove (Skip = "Manual integration test...")
+public async Task TraceExporter_WithRealDatabase_CreatesTablesAndExportsData()
+```
+
+3. Run the tests:
+```bash
+dotnet test --filter "ManualIntegrationTests"
+```
+
+4. Stop the container when done:
+```bash
+docker-compose down
+```
+
+**Option 2: Using Your Own PostgreSQL Instance**
+
+Update the connection string in `ManualIntegrationTests.cs`:
+```csharp
+private const string TestConnectionString = "Host=yourhost;Port=5432;Database=yourdb;Username=youruser;Password=yourpass;";
+```
+
+The integration tests will:
+- Create unique schemas for each test to avoid conflicts
+- Verify that database objects (schemas and tables) are created correctly
+- Test actual data insertion for traces
+- Validate that all three exporters (traces, metrics, logs) work correctly
+
+**PostgreSQL Container Details:**
+- Database: `testdb`
+- Username: `user` 
+- Password: `password`
+- Port: `5432`
+- Connection String: `Host=localhost;Port=5432;Database=testdb;Username=user;Password=password;`
+
 ### Code Coverage
 
 ```bash
