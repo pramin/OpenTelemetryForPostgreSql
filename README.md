@@ -44,19 +44,33 @@ var options = new PostgresExporterOptions
 #### Traces
 
 ```csharp
+// Using the factory method
+var traceExporter = PostgresExporterExtensions.CreatePostgresTraceExporter(options =>
+{
+    options.ConnectionString = "Host=localhost;Database=telemetry;Username=user;Password=pass;";
+    options.SchemaName = "telemetry";
+});
+
 var tracerProvider = TracerProviderBuilder.Create()
     .AddSource("MyApplication")
-    .AddProcessor(sp => new PostgresTraceExporter(options))
+    .AddProcessor(new SimpleExportProcessor<Activity>(traceExporter))
     .Build();
 ```
 
 #### Metrics
 
 ```csharp
+// Using the factory method
+var metricsExporter = PostgresExporterExtensions.CreatePostgresMetricsExporter(options =>
+{
+    options.ConnectionString = "Host=localhost;Database=telemetry;Username=user;Password=pass;";
+    options.SchemaName = "telemetry";
+});
+
 var meterProvider = MeterProviderBuilder.Create()
     .AddMeter("MyApplication")
     .AddReader(new PeriodicExportingMetricReader(
-        new PostgresMetricsExporter(options), 
+        metricsExporter, 
         options.ExportTimeoutMs))
     .Build();
 ```
@@ -64,9 +78,35 @@ var meterProvider = MeterProviderBuilder.Create()
 #### Logs
 
 ```csharp
+// Using the factory method
+var logsExporter = PostgresExporterExtensions.CreatePostgresLogsExporter(options =>
+{
+    options.ConnectionString = "Host=localhost;Database=telemetry;Username=user;Password=pass;";
+    options.SchemaName = "telemetry";
+});
+
 var loggerFactory = LoggerFactory.Create(builder =>
     builder.AddOpenTelemetry(options =>
-        options.AddProcessor(sp => new PostgresLogsExporter(exporterOptions))));
+        options.AddProcessor(new SimpleExportProcessor<LogRecord>(logsExporter))));
+```
+
+### Alternative Usage with Pre-configured Options
+
+```csharp
+// Create options once
+var exporterOptions = new PostgresExporterOptions
+{
+    ConnectionString = "Host=localhost;Database=telemetry;Username=user;Password=pass;",
+    SchemaName = "telemetry",
+    AutoCreateDatabaseObjects = true,
+    BatchSize = 100,
+    ExportTimeoutMs = 30000
+};
+
+// Use for all exporters
+var traceExporter = PostgresExporterExtensions.CreatePostgresTraceExporter(exporterOptions);
+var metricsExporter = PostgresExporterExtensions.CreatePostgresMetricsExporter(exporterOptions);
+var logsExporter = PostgresExporterExtensions.CreatePostgresLogsExporter(exporterOptions);
 ```
 
 ### Database Schema
