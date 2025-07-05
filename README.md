@@ -205,18 +205,28 @@ The library includes both basic integration tests and manual integration tests t
 docker-compose up -d
 ```
 
-2. Run manual integration tests by removing the `Skip` parameter from the tests in `ManualIntegrationTests.cs`:
-```csharp
-[Fact] // Remove (Skip = "Manual integration test...")
-public async Task TraceExporter_WithRealDatabase_CreatesTablesAndExportsData()
+2. Run the integration tests (they are enabled by default and will connect to the running PostgreSQL container):
+
+```bash
+# Run all tests including integration tests
+dotnet test
+
+# Or run only the integration tests
+dotnet test --filter "ManualIntegrationTests"
 ```
 
-3. Run the tests:
+3. The tests will automatically:
 ```bash
 dotnet test --filter "ManualIntegrationTests"
 ```
 
-4. Stop the container when done:
+4. The integration tests validate:
+- Creation of unique schemas for each test to avoid conflicts
+- Database objects (schemas and tables) are created correctly  
+- Actual data insertion and retrieval for traces
+- All three exporters (traces, metrics, logs) work correctly
+
+5. Stop the container when done:
 ```bash
 docker-compose down
 ```
@@ -229,10 +239,6 @@ private const string TestConnectionString = "Host=yourhost;Port=5432;Database=yo
 ```
 
 The integration tests will:
-- Create unique schemas for each test to avoid conflicts
-- Verify that database objects (schemas and tables) are created correctly
-- Test actual data insertion for traces
-- Validate that all three exporters (traces, metrics, logs) work correctly
 
 **PostgreSQL Container Details:**
 - Database: `testdb`
