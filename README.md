@@ -22,6 +22,21 @@ The `Int31h.Common.OpenTelemetry.PostgresExporters` library provides OpenTelemet
 dotnet add package Int31h.Common.OpenTelemetry.PostgresExporters
 ```
 
+## Quick Start
+
+Want to see the library in action? Check out our complete [Sample Application](SampleApplication/README.md) that demonstrates all three exporters with a realistic e-commerce scenario.
+
+```bash
+# Quick start - runs everything for you
+./run-sample.sh
+
+# Or manual steps:
+# docker-compose up -d
+# cd SampleApplication && dotnet run
+```
+
+The sample shows traces, metrics, and logs being exported to PostgreSQL with real business context.
+
 ## Usage
 
 ### Configuration

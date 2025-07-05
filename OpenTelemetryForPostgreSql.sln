@@ -7,6 +7,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Int31h.Common.OpenTelemetry
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Int31h.Common.OpenTelemetry.PostgresExporters.Tests", "Int31h.Common.OpenTelemetry.PostgresExporters.Tests\Int31h.Common.OpenTelemetry.PostgresExporters.Tests.csproj", "{C78DA48A-F1CC-441D-9218-7C325020E4A5}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SampleApplication", "SampleApplication\SampleApplication.csproj", "{884FE246-E1A8-4FBD-9CBD-72BB20B54BD8}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -24,5 +26,9 @@ Global
 		{C78DA48A-F1CC-441D-9218-7C325020E4A5}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{C78DA48A-F1CC-441D-9218-7C325020E4A5}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{C78DA48A-F1CC-441D-9218-7C325020E4A5}.Release|Any CPU.Build.0 = Release|Any CPU
+		{884FE246-E1A8-4FBD-9CBD-72BB20B54BD8}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{884FE246-E1A8-4FBD-9CBD-72BB20B54BD8}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{884FE246-E1A8-4FBD-9CBD-72BB20B54BD8}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{884FE246-E1A8-4FBD-9CBD-72BB20B54BD8}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 EndGlobal
